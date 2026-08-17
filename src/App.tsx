@@ -12,6 +12,7 @@ import {
   Pin,
   RefreshCw,
 } from "lucide-react";
+import { Briefing } from "./components/Briefing";
 import { ConsoleStrip } from "./components/ConsoleStrip";
 import { FileTree } from "./components/FileTree";
 import { CodeViewer } from "./components/CodeViewer";
@@ -91,6 +92,7 @@ export default function App() {
   const [readme, setReadme] = useState<string | null>(null);
 
   const [tab, setTab] = useState<Tab>("code");
+  const [mode, setMode] = useState<"briefing" | "bench">("briefing");
   const [repos, setRepos] = useState<RepoMeta[] | null>(null);
   const [rate, setRate] = useState<RateInfo | null>(null);
   const [banner, setBanner] = useState<string | null>(null);
@@ -310,8 +312,30 @@ export default function App() {
             </span>
           </a>
 
+          {/* mode switch */}
+          <div className="ml-1 flex shrink-0 items-center rounded-md border border-ink-700 bg-ink-850 p-0.5">
+            {(
+              [
+                ["briefing", "Brief"],
+                ["bench", "Repo bench"],
+              ] as const
+            ).map(([id, label]) => (
+              <button
+                key={id}
+                onClick={() => setMode(id)}
+                className={`rounded px-2.5 py-1 font-mono text-[11px] transition-all ${
+                  mode === id
+                    ? "bg-ember-500/20 text-ember-300 shadow-[inset_0_0_0_1px_rgba(237,162,47,0.45)]"
+                    : "text-ink-400 hover:text-ink-100"
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
           {/* repo switcher */}
-          <div className="relative ml-2 hidden sm:block" ref={switcherRef}>
+          {mode === "bench" && <div className="relative ml-2 hidden sm:block" ref={switcherRef}>
             <button
               onClick={() => setSwitcherOpen((o) => !o)}
               className="flex items-center gap-2 rounded-md border border-ink-700 bg-ink-850 px-3 py-1.5 font-mono text-[12px] text-ink-200 transition-all hover:border-ember-500/50 hover:text-ink-50"
@@ -377,9 +401,15 @@ export default function App() {
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
+          </div>}
 
           <div className="ml-auto flex items-center gap-2">
+            {mode === "briefing" ? (
+              <span className="hidden items-center gap-1.5 rounded-md border border-ink-700 bg-ink-850 px-2.5 py-1.5 font-mono text-[10.5px] text-ink-300 md:inline-flex">
+                <span className="dot-live h-1.5 w-1.5 rounded-full bg-mint-400" />
+                BWDAS.MD · aug 2026 · phase 0
+              </span>
+            ) : (
             <span
               className="hidden items-center gap-1.5 rounded-md border border-ink-700 bg-ink-850 px-2.5 py-1.5 font-mono text-[10.5px] text-ink-300 md:inline-flex"
               title="GitHub REST API quota remaining for this browser"
@@ -387,32 +417,38 @@ export default function App() {
               <span className={`h-1.5 w-1.5 rounded-full ${rateTone}`} />
               api {rate ? `${rate.remaining}/${rate.limit}` : "…"}
             </span>
-            <button
-              onClick={() => loadRepo(current.owner, current.repo, token)}
-              disabled={refreshing}
-              className="inline-flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-850 px-2.5 py-1.5 font-mono text-[11px] text-ink-200 transition-all hover:border-mint-500/50 hover:text-mint-300 active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">refresh</span>
-            </button>
-            <a
-              href={`https://github.com/${current.owner}/${current.repo}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-md border border-cobalt-500/50 bg-cobalt-500/10 px-2.5 py-1.5 font-mono text-[11px] text-cobalt-300 transition-all hover:bg-cobalt-500/20 active:scale-95"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">github</span>
-            </a>
+            )}
+            {mode === "bench" && (
+              <>
+                <button
+                  onClick={() => loadRepo(current.owner, current.repo, token)}
+                  disabled={refreshing}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-ink-700 bg-ink-850 px-2.5 py-1.5 font-mono text-[11px] text-ink-200 transition-all hover:border-mint-500/50 hover:text-mint-300 active:scale-95 disabled:opacity-50"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+                  <span className="hidden sm:inline">refresh</span>
+                </button>
+                <a
+                  href={`https://github.com/${current.owner}/${current.repo}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-md border border-cobalt-500/50 bg-cobalt-500/10 px-2.5 py-1.5 font-mono text-[11px] text-cobalt-300 transition-all hover:bg-cobalt-500/20 active:scale-95"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">github</span>
+                </a>
+              </>
+            )}
           </div>
         </div>
       </header>
 
-      <ConsoleStrip />
+      {mode === "bench" && <ConsoleStrip />}
+      {mode === "briefing" && <Briefing />}
 
       {/* ---------- error banner ---------- */}
       <AnimatePresence>
-        {banner && (
+        {mode === "bench" && banner && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
@@ -440,6 +476,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* ---------- main bench ---------- */}
+      {mode === "bench" && (
       <main className="mx-auto grid w-full max-w-[1600px] flex-1 gap-4 px-4 py-4 lg:grid-cols-[288px_minmax(0,1fr)_332px] lg:px-6">
         {/* explorer */}
         <section className="panel rise flex max-h-[440px] flex-col overflow-hidden lg:sticky lg:top-[122px] lg:h-[calc(100vh-150px)] lg:max-h-none" style={{ animationDelay: "60ms" }}>
@@ -552,6 +589,7 @@ export default function App() {
           </div>
         </aside>
       </main>
+      )}
 
       {/* ---------- ticker ---------- */}
       <div className="marquee-wrap overflow-hidden border-t border-ink-700/70 bg-ink-900/80">
