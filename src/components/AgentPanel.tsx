@@ -1,14 +1,40 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FileCode2, FlaskConical, ScrollText } from "lucide-react";
 import { ACCENT } from "../data/pipeline";
-import type { Agent } from "../data/pipeline";
+import type { Agent, CodeLoader } from "../data/pipeline";
 import { CodeBlock } from "./CodeBlock";
 
 type Tab = "charter" | "code" | "tests";
 
+/* Sources are fetched lazily (dynamic ?raw imports) so they never block boot. */
+function useLazySource(loader: CodeLoader | null): string | null {
+  const [value, setValue] = useState<string | null>(null);
+  useEffect(() => {
+    if (!loader) {
+      setValue(null);
+      return;
+    }
+    let live = true;
+    setValue(null);
+    loader()
+      .then((c) => {
+        if (live) setValue(c);
+      })
+      .catch(() => {
+        if (live) setValue("# this source file failed to load — the module is served lazily");
+      });
+    return () => {
+      live = false;
+    };
+  }, [loader]);
+  return value;
+}
+
 export function AgentPanel({ agent }: { agent: Agent }) {
   const [tab, setTab] = useState<Tab>("charter");
   const a = ACCENT[agent.accent];
+  const code = useLazySource(tab === "code" ? agent.code : null);
+  const testSrc = useLazySource(tab === "tests" ? agent.test : null);
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "charter", label: "Charter", icon: <ScrollText className="h-3.5 w-3.5" /> },
@@ -72,13 +98,22 @@ export function AgentPanel({ agent }: { agent: Agent }) {
             </div>
           </div>
         )}
-        {tab === "code" && <CodeBlock code={agent.code} filename={agent.file} accentHex={a.hex} />}
+        {tab === "code" &&
+          (code === null ? (
+            <div className="skeleton h-72 w-full rounded-lg" />
+          ) : (
+            <CodeBlock code={code} filename={agent.file} accentHex={a.hex} />
+          ))}
         {tab === "tests" && (
           <div className="space-y-3">
             <p className="text-[12px] leading-relaxed text-sand-400">
               Written against the agent's contract, not its internals — the suite runs with <span className="font-mono text-sand-200">pytest</span> and no GEE credentials.
             </p>
-            <CodeBlock code={agent.test} filename={agent.testFile} accentHex={a.hex} />
+            {testSrc === null ? (
+              <div className="skeleton h-72 w-full rounded-lg" />
+            ) : (
+              <CodeBlock code={testSrc} filename={agent.testFile} accentHex={a.hex} />
+            )}
           </div>
         )}
       </div>

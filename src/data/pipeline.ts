@@ -1,20 +1,28 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// The real deliverables, imported as raw text so the UI always shows the code
-// that actually ships in /pipeline — never a hand-copied approximation.
-import configPy from "../../pipeline/src/bwdas/config.py?raw";
-import modelsPy from "../../pipeline/src/bwdas/models.py?raw";
-import basePy from "../../pipeline/src/bwdas/agents/base.py?raw";
-import extractPy from "../../pipeline/src/bwdas/agents/extract_agent.py?raw";
-import standardizePy from "../../pipeline/src/bwdas/agents/standardize_agent.py?raw";
-import loadPy from "../../pipeline/src/bwdas/agents/load_agent.py?raw";
-import feedPy from "../../pipeline/src/bwdas/agents/feed_agent.py?raw";
-import cliPy from "../../pipeline/src/bwdas/cli.py?raw";
+/* The real deliverables are imported LAZILY (dynamic ?raw imports) so the app
+   boots instantly and a hiccup in any one Python source can never block the
+   first paint. The UI always shows the code that actually ships in /pipeline
+   — never a hand-copied approximation. */
 
-import testExtract from "../../pipeline/tests/test_extract_agent.py?raw";
-import testStandardize from "../../pipeline/tests/test_standardize_agent.py?raw";
-import testLoad from "../../pipeline/tests/test_load_agent.py?raw";
-import testFeed from "../../pipeline/tests/test_feed_agent.py?raw";
-import testE2E from "../../pipeline/tests/test_pipeline_e2e.py?raw";
+export type CodeLoader = () => Promise<string>;
+
+const load = (spec: string): CodeLoader => {
+  const loaders: Record<string, CodeLoader> = {
+    config: () => import("../../pipeline/src/bwdas/config.py?raw").then((m) => m.default),
+    models: () => import("../../pipeline/src/bwdas/models.py?raw").then((m) => m.default),
+    base: () => import("../../pipeline/src/bwdas/agents/base.py?raw").then((m) => m.default),
+    extract: () => import("../../pipeline/src/bwdas/agents/extract_agent.py?raw").then((m) => m.default),
+    standardize: () => import("../../pipeline/src/bwdas/agents/standardize_agent.py?raw").then((m) => m.default),
+    load: () => import("../../pipeline/src/bwdas/agents/load_agent.py?raw").then((m) => m.default),
+    feed: () => import("../../pipeline/src/bwdas/agents/feed_agent.py?raw").then((m) => m.default),
+    cli: () => import("../../pipeline/src/bwdas/cli.py?raw").then((m) => m.default),
+    testExtract: () => import("../../pipeline/tests/test_extract_agent.py?raw").then((m) => m.default),
+    testStandardize: () => import("../../pipeline/tests/test_standardize_agent.py?raw").then((m) => m.default),
+    testLoad: () => import("../../pipeline/tests/test_load_agent.py?raw").then((m) => m.default),
+    testFeed: () => import("../../pipeline/tests/test_feed_agent.py?raw").then((m) => m.default),
+    testE2E: () => import("../../pipeline/tests/test_pipeline_e2e.py?raw").then((m) => m.default),
+  };
+  return loaders[spec];
+};
 
 export type Accent = "rain" | "veg" | "heat" | "soil";
 
@@ -38,9 +46,9 @@ export interface Agent {
   principles: string[];
   consumes: string;
   produces: string;
-  code: string;
+  code: CodeLoader;
   testFile: string;
-  test: string;
+  test: CodeLoader;
 }
 
 export const ACCENT: Record<
@@ -76,9 +84,9 @@ export const AGENTS: Agent[] = [
     ],
     consumes: "—",
     produces: "StageResult / PipelineContext",
-    code: basePy,
+    code: load("base"),
     testFile: "tests/test_pipeline_e2e.py",
-    test: testE2E,
+    test: load("testE2E"),
   },
   {
     id: "extract",
@@ -95,9 +103,9 @@ export const AGENTS: Agent[] = [
     ],
     consumes: "GEE (CHIRPS · S2 · MODIS · SMAP)",
     produces: "raw_readings",
-    code: extractPy,
+    code: load("extract"),
     testFile: "tests/test_extract_agent.py",
-    test: testExtract,
+    test: load("testExtract"),
   },
   {
     id: "standardize",
@@ -114,9 +122,9 @@ export const AGENTS: Agent[] = [
     ],
     consumes: "raw_readings",
     produces: "cdi_records",
-    code: standardizePy,
+    code: load("standardize"),
     testFile: "tests/test_standardize_agent.py",
-    test: testStandardize,
+    test: load("testStandardize"),
   },
   {
     id: "load",
@@ -133,9 +141,9 @@ export const AGENTS: Agent[] = [
     ],
     consumes: "cdi_records",
     produces: "master_district.csv + snapshot",
-    code: loadPy,
+    code: load("load"),
     testFile: "tests/test_load_agent.py",
-    test: testLoad,
+    test: load("testLoad"),
   },
   {
     id: "feed",
@@ -152,16 +160,16 @@ export const AGENTS: Agent[] = [
     ],
     consumes: "cdi_records",
     produces: "alert feed",
-    code: feedPy,
+    code: load("feed"),
     testFile: "tests/test_feed_agent.py",
-    test: testFeed,
+    test: load("testFeed"),
   },
 ];
 
-export const SUPPORT_FILES = [
-  { name: "src/bwdas/config.py", note: "datasets, weights, districts, thresholds", code: configPy },
-  { name: "src/bwdas/models.py", note: "pydantic row contracts", code: modelsPy },
-  { name: "src/bwdas/cli.py", note: "orchestrator the scheduler calls", code: cliPy },
+export const SUPPORT_FILES: { name: string; note: string; code: CodeLoader }[] = [
+  { name: "src/bwdas/config.py", note: "datasets, weights, districts, thresholds", code: load("config") },
+  { name: "src/bwdas/models.py", note: "pydantic row contracts", code: load("models") },
+  { name: "src/bwdas/cli.py", note: "orchestrator the scheduler calls", code: load("cli") },
 ];
 
 export interface GrillOption {

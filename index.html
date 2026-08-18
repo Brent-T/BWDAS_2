@@ -5,18 +5,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>BWDAS · Drought-Index Pipeline Workbench — TDD & Architecture</title>
     <meta name="description" content="BWDAS drought-index ETL pipeline — four dedicated agents (Extract, Standardize, Load, Feed), TDD suites, and an interactive architecture design review." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts load asynchronously: a blocked font CDN must never hold the first paint -->
     <link
+      rel="preload"
+      as="style"
       href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
-      rel="stylesheet"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&display=swap"
+      />
+    </noscript>
     <style>
       html, body { margin: 0; padding: 0; background-color: #12100d; }
+      #boot-error {
+        position: fixed; inset: auto 0 0 0; z-index: 9999;
+        max-height: 40vh; overflow: auto;
+        background: #1c1813; color: #f6f0e3;
+        border-top: 2px solid #e0a83f;
+        font: 12px/1.6 "JetBrains Mono", Consolas, monospace;
+        padding: 14px 18px; white-space: pre-wrap; word-break: break-word;
+      }
+      #boot-error b { color: #e8834a; }
     </style>
   </head>
   <body>
     <div id="root"></div>
+    <div id="boot-error" hidden></div>
+    <script>
+      // Boot diagnostics: if anything fails before or during React mount,
+      // the error is printed visibly instead of dying into a black screen.
+      (function () {
+        var box = document.getElementById("boot-error");
+        function show(kind, msg) {
+          box.hidden = false;
+          box.innerHTML += "<b>[" + kind + "]</b> " + msg + "\n";
+        }
+        window.addEventListener("error", function (e) {
+          show("error", (e.message || "unknown") + " @ " + (e.filename || "?") + ":" + (e.lineno || "?"));
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          show("promise", String(e.reason && (e.reason.stack || e.reason.message || e.reason)));
+        });
+        setTimeout(function () {
+          var root = document.getElementById("root");
+          if (root && root.childElementCount === 0 && box.hidden) {
+            show("timeout", "React never mounted within 6s — the app module likely failed to evaluate. See any errors above.");
+          }
+        }, 6000);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

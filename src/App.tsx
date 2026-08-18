@@ -42,6 +42,33 @@ function useReveal() {
   }, []);
 }
 
+function SupportCard({ name, note, code }: { name: string; note: string; code: () => Promise<string> }) {
+  const [src, setSrc] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    code()
+      .then((c) => {
+        if (live) setSrc(c);
+      })
+      .catch(() => {
+        if (live) setSrc("# failed to load this source file");
+      });
+    return () => {
+      live = false;
+    };
+  }, [code]);
+  return (
+    <div className="min-w-0">
+      {src === null ? (
+        <div className="skeleton h-64 w-full rounded-lg" />
+      ) : (
+        <CodeBlock code={src} filename={name} accentHex="#e0a83f" />
+      )}
+      <p className="mt-1.5 font-mono text-[10px] text-sand-500">{note}</p>
+    </div>
+  );
+}
+
 const WEIGHTS = [
   { key: "spi", label: "SPI-3 rainfall", pct: 40, accent: "rain" as const, src: "CHIRPS · 5km" },
   { key: "ndvi", label: "NDVI vegetation", pct: 20, accent: "veg" as const, src: "Sentinel-2 · 10m" },
@@ -193,10 +220,7 @@ export default function App() {
           </div>
           <div className="grid gap-4 lg:grid-cols-3">
             {SUPPORT_FILES.map((f) => (
-              <div key={f.name} className="min-w-0">
-                <CodeBlock code={f.code} filename={f.name} accentHex="#e0a83f" />
-                <p className="mt-1.5 font-mono text-[10px] text-sand-500">{f.note}</p>
-              </div>
+              <SupportCard key={f.name} name={f.name} note={f.note} code={f.code} />
             ))}
           </div>
         </section>
