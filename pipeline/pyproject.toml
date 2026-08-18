@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bwdas"
+version = "0.1.0"
+description = "Botswana Weather & Agricultural Data Intelligence System — drought-index ETL pipeline"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "Brent Molefe" }]
+dependencies = ["pydantic>=2.5", "python-dotenv>=1.0"]
+
+[project.optional-dependencies]
+gee = ["earthengine-api>=0.1.380"]
+geo = ["geopandas>=0.14"]
+dev = ["pytest>=7.4"]
+
+[project.scripts]
+bwdas = "bwdas.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
