@@ -15,6 +15,11 @@ function daysTo(iso: string): number {
 function useReveal() {
   useEffect(() => {
     const els = Array.from(document.querySelectorAll(".reveal"));
+    // Failsafe 1: no IntersectionObserver support -> show everything.
+    if (!("IntersectionObserver" in window)) {
+      els.forEach((el) => el.classList.add("in"));
+      return;
+    }
     const io = new IntersectionObserver(
       (entries) => {
         for (const e of entries) {
@@ -24,10 +29,16 @@ function useReveal() {
           }
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.06, rootMargin: "0px 0px -4% 0px" }
     );
     els.forEach((el) => io.observe(el));
-    return () => io.disconnect();
+    // Failsafe 2: embedded previews can mount inside hidden / zero-height
+    // iframes where intersections never fire — never trap content invisible.
+    const t = window.setTimeout(() => els.forEach((el) => el.classList.add("in")), 1100);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(t);
+    };
   }, []);
 }
 

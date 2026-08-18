@@ -6,17 +6,19 @@ import type { Stage } from "../data/pipeline";
 const STEP_MS = 720;
 
 function Connector({ from, to, lit }: { from: string; to: string; lit: boolean }) {
+  // Gradient ids must not contain "#" — strip it from the hex colours.
+  const gid = `g${from.replace("#", "")}-${to.replace("#", "")}`;
   return (
     <svg viewBox="0 0 48 24" className="mx-1 hidden h-6 w-12 shrink-0 md:block" aria-hidden>
       <defs>
-        <linearGradient id={`g-${from}-${to}`} x1="0" y1="0" x2="1" y2="0">
+        <linearGradient id={gid} x1="0" y1="0" x2="1" y2="0">
           <stop offset="0%" stopColor={from} />
           <stop offset="100%" stopColor={to} />
         </linearGradient>
       </defs>
       <line
         x1="2" y1="12" x2="40" y2="12"
-        stroke={`url(#g-${from}-${to})`}
+        stroke={`url(#${gid})`}
         strokeWidth="2"
         className={lit ? "flow-dash" : ""}
         strokeOpacity={lit ? 0.95 : 0.35}
