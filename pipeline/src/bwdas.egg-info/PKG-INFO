@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: bwdas
+Version: 0.1.0
+Summary: Botswana Weather & Agricultural Data Intelligence System — drought-index ETL pipeline
+Author: Brent Molefe
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: pydantic>=2.5
+Requires-Dist: python-dotenv>=1.0
+Provides-Extra: gee
+Requires-Dist: earthengine-api>=0.1.380; extra == "gee"
+Provides-Extra: geo
+Requires-Dist: geopandas>=0.14; extra == "geo"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"

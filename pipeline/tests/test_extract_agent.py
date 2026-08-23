@@ -22,12 +22,20 @@ class FakeGateway:
         self.fail = fail or set()
         self.calls = []
 
-    def district_mean(self, gee_id, band, start, end, district):
+    def district_mean_anomaly(self, gee_id, band, start, end, district,
+                               baseline_start, baseline_end, use_anomaly):
         key = (gee_id, district)
         self.calls.append(key)
         if key in self.fail:
             raise RuntimeError("simulated GEE timeout")
-        return self.values.get(key)
+        value = self.values.get(key)
+        if value is None:
+            return None
+        # Return (current_value, anomaly) tuple
+        if use_anomaly:
+            # For anomaly mode, return a simulated anomaly (e.g., 10% of value)
+            return (value, value * 0.1)
+        return (value, value)
 
 
 class FakeImage:
@@ -106,6 +114,10 @@ class FakeEarthEngine:
         @staticmethod
         def lt(field, value):
             return ("lt", field, value)
+
+        @staticmethod
+        def calendarRange(start, end, unit):
+            return ("calendarRange", start, end, unit)
 
     class Reducer:
         @staticmethod
@@ -204,11 +216,14 @@ def test_gateway_derives_ndvi_with_gaul_geometry_and_cloud_filter():
     gateway = EarthEngineGateway()
     gateway._ee = ee
 
-    value = gateway.district_mean(
-        config.DATASETS["ndvi"]["gee_id"], "NDVI", "2026-07-01", "2026-08-15", "Kweneng"
+    result = gateway.district_mean_anomaly(
+        config.DATASETS["ndvi"]["gee_id"], "NDVI", "2026-07-01", "2026-08-15", "Kweneng",
+        "2017-01-01", "2024-12-31", use_anomaly=True
     )
 
-    assert value == pytest.approx(0.2)
+    assert result is not None
+    current_value, anomaly = result
+    assert current_value == pytest.approx(0.2)
     assert ("FeatureCollection", "FAO/GAUL/2015/level1") in ee.calls
     assert ("normalizedDifference", ["B8", "B4"]) in ee.calls
     assert ("filter", ("lt", "CLOUDY_PIXEL_PERCENTAGE", config.S2_CLOUD_THRESHOLD)) in ee.calls
@@ -220,11 +235,14 @@ def test_gateway_converts_lst_before_reduction():
     gateway = EarthEngineGateway()
     gateway._ee = ee
 
-    value = gateway.district_mean(
-        config.DATASETS["lst"]["gee_id"], "LST_celsius", "2026-07-01", "2026-08-15", "Kweneng"
+    result = gateway.district_mean_anomaly(
+        config.DATASETS["lst"]["gee_id"], "LST_celsius", "2026-07-01", "2026-08-15", "Kweneng",
+        "2017-01-01", "2024-12-31", use_anomaly=False
     )
 
-    assert value == pytest.approx(26.85)
+    assert result is not None
+    current_value, _ = result
+    assert current_value == pytest.approx(26.85)
     assert ("multiply", config.LST_SCALE_FACTOR) in ee.calls
     assert ("subtract", config.KELVIN_TO_CELSIUS) in ee.calls
     assert ee.calls.index(("multiply", config.LST_SCALE_FACTOR)) < ee.calls.index(
