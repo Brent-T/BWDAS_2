@@ -1,0 +1,15 @@
+# --- BWDAS pipeline runtime -------------------------------------------------
+# Core ETL (required for Extract->Standardize->Load->Feed and the test-suite)
+pydantic>=2.5
+python-dotenv>=1.0
+
+# Satellite extraction (only needed for a LIVE run, not for tests).
+# earthengine-api is imported lazily inside EarthEngineGateway, so the suite
+# runs without it installed / authenticated.
+earthengine-api>=0.1.380
+
+# Post-PoC geospatial join against the GADM shapefile (optional for now).
+# geopandas>=0.14
+
+# --- test tooling -----------------------------------------------------------
+pytest>=7.4

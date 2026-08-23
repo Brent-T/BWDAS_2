@@ -1,0 +1,8 @@
+node_modules/
+.next/
+dist/
+build/
+*.log
+pipeline/.venv/
+pipeline/src/*.egg-info/
+**/__pycache__/
