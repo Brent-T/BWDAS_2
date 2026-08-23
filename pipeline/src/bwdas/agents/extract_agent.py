@@ -8,6 +8,10 @@ Design notes (deliberate):
   * Extraction is per (district x variable). A single failed cell is logged
     and skipped, never fatal: one cloudy Sentinel-2 tile must not kill the
     whole national run. The missing cell is surfaced so Standardize can decide.
+  * Historical baseline anomalies are computed ON GEE SERVERS to avoid local
+    RAM constraints. Each variable compares current values against its own
+    climatological baseline (e.g., NDVI 2017-2024, SPI 1981-2025) for the same
+    calendar month, returning true anomalies rather than absolute values.
 """
 
 from __future__ import annotations
@@ -28,10 +32,15 @@ class GEEGateway(Protocol):
     Swap this for a fake in tests, or a cached/replay gateway for offline runs.
     """
 
-    def district_mean(
-        self, gee_id: str, band: str, start: str, end: str, district: str
-    ) -> float | None:
-        """Reduce an image collection over a district; None if no data."""
+    def district_mean_anomaly(
+        self, gee_id: str, band: str, start: str, end: str, district: str,
+        baseline_start: str, baseline_end: str, use_anomaly: bool
+    ) -> tuple[float, float] | None:
+        """Reduce an image collection over a district; returns (current_value, anomaly).
+        
+        If use_anomaly=False, returns (current_value, current_value) for backward compat.
+        Returns None if no data available.
+        """
 
 
 class EarthEngineGateway:
@@ -48,7 +57,8 @@ class EarthEngineGateway:
             self._ee = ee
         return self._ee
 
-    def district_mean(self, gee_id, band, start, end, district):
+    def district_mean_anomaly(self, gee_id, band, start, end, district,
+                               baseline_start, baseline_end, use_anomaly):
         ee = self._ensure()
         districts = (
             ee.FeatureCollection("FAO/GAUL/2015/level1")
@@ -61,37 +71,94 @@ class EarthEngineGateway:
             )
         ).geometry()
 
-        collection = (
+        # Parse target month from end date for baseline filtering
+        target_date = end  # e.g., "2026-08-15"
+        target_month = int(target_date.split("-")[1])
+
+        # Fetch current period imagery
+        current_collection = (
             ee.ImageCollection(gee_id)
             .filterDate(start, end)
             .filterBounds(region)
         )
+
+        # Process based on variable type
         if gee_id == config.DATASETS["ndvi"]["gee_id"]:
-            collection = collection.filter(
+            current_collection = current_collection.filter(
                 ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", config.S2_CLOUD_THRESHOLD)
             )
-            image = collection.map(
+            current_image = current_collection.map(
                 lambda img: img.normalizedDifference(["B8", "B4"])
                 .rename("NDVI")
             ).median()
             result_band = "NDVI"
         elif gee_id == config.DATASETS["lst"]["gee_id"]:
-            image = collection.select("LST_Day_1km").map(
+            current_image = current_collection.select("LST_Day_1km").map(
                 lambda img: img.multiply(config.LST_SCALE_FACTOR)
                 .subtract(config.KELVIN_TO_CELSIUS)
                 .rename("LST_celsius")
             ).mean()
             result_band = "LST_celsius"
         else:
-            image = collection.select(band).mean()
+            current_image = current_collection.select(band).mean()
             result_band = band
 
-        reduced = image.reduceRegion(
+        # Get current value
+        current_reduced = current_image.reduceRegion(
             reducer=ee.Reducer.mean(), geometry=region, scale=5000,
             maxPixels=1e13, bestEffort=True,
         ).getInfo()
-        value = reduced.get(result_band) if reduced else None
-        return float(value) if value is not None else None
+        current_value = current_reduced.get(result_band) if current_reduced else None
+        
+        if current_value is None:
+            return None
+
+        # If anomaly calculation disabled, return current value as both
+        if not use_anomaly:
+            return (float(current_value), float(current_value))
+
+        # Fetch historical baseline for the SAME CALENDAR MONTH across baseline years
+        baseline_collection = (
+            ee.ImageCollection(gee_id)
+            .filter(ee.Filter.calendarRange(target_month, target_month, 'month'))
+            .filterDate(baseline_start, baseline_end)
+            .filterBounds(region)
+        )
+
+        # Process baseline based on variable type
+        if gee_id == config.DATASETS["ndvi"]["gee_id"]:
+            baseline_collection = baseline_collection.filter(
+                ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", config.S2_CLOUD_THRESHOLD)
+            )
+            baseline_image = baseline_collection.map(
+                lambda img: img.normalizedDifference(["B8", "B4"])
+                .rename("NDVI")
+            ).mean()
+            baseline_band = "NDVI"
+        elif gee_id == config.DATASETS["lst"]["gee_id"]:
+            baseline_image = baseline_collection.select("LST_Day_1km").map(
+                lambda img: img.multiply(config.LST_SCALE_FACTOR)
+                .subtract(config.KELVIN_TO_CELSIUS)
+                .rename("LST_celsius")
+            ).mean()
+            baseline_band = "LST_celsius"
+        else:
+            baseline_image = baseline_collection.select(band).mean()
+            baseline_band = band
+
+        # Get baseline mean
+        baseline_reduced = baseline_image.reduceRegion(
+            reducer=ee.Reducer.mean(), geometry=region, scale=5000,
+            maxPixels=1e13, bestEffort=True,
+        ).getInfo()
+        baseline_value = baseline_reduced.get(baseline_band) if baseline_reduced else None
+
+        if baseline_value is None:
+            return (float(current_value), float(current_value))
+
+        # Compute anomaly: current - baseline
+        anomaly = float(current_value) - float(baseline_value)
+        return (float(current_value), anomaly)
 
 
 class ExtractAgent(BaseAgent):
@@ -108,27 +175,44 @@ class ExtractAgent(BaseAgent):
 
         for variable in config.VARIABLES:
             spec = config.DATASETS[variable]
+            baseline_start, baseline_end = spec["baseline"]
+            
+            # Enable anomaly calculation for NDVI and LST (variables with strong seasonal baselines)
+            # SPI and SM use cross-sectional scaling due to their nature
+            use_anomaly = variable in ("ndvi", "lst")
+            
             for district in config.DISTRICTS:
                 try:
-                    value = self.gateway.district_mean(
+                    result = self.gateway.district_mean_anomaly(
                         gee_id=spec["gee_id"],
                         band=spec["band"],
                         start=config.ANALYSIS_START,
                         end=config.ANALYSIS_END,
                         district=district,
+                        baseline_start=baseline_start,
+                        baseline_end=baseline_end,
+                        use_anomaly=use_anomaly,
                     )
                 except Exception as exc:  # noqa: BLE001 — per-cell isolation
                     errors.append(f"{variable}/{district}: {exc}")
                     continue
-                if value is None:
+                    
+                if result is None:
                     errors.append(f"{variable}/{district}: no data in window")
                     continue
+                    
+                current_value, anomaly = result
+                
+                # For anomaly-based variables, store the anomaly as the value for standardization
+                # For non-anomaly variables, store the raw value
+                value_for_scoring = anomaly if use_anomaly else current_value
+                
                 readings.append(
                     RawDistrictReading(
                         district=district,
                         variable=variable,
                         date=config.ANALYSIS_END,
-                        value=value,
+                        value=value_for_scoring,
                         source=spec["gee_id"],
                         unit=spec["unit"],
                     )

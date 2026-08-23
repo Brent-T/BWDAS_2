@@ -1,0 +1,2 @@
+[console_scripts]
+bwdas = bwdas.cli:main

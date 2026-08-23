@@ -14,12 +14,24 @@ from bwdas.agents.standardize_agent import StandardizeAgent
 
 
 class SeededGateway:
-    """Returns a deterministic per-(variable, district) value."""
+    """Returns a deterministic per-(variable, district) value with anomaly support."""
 
-    def district_mean(self, gee_id, band, start, end, district):
+    def district_mean_anomaly(
+        self, gee_id, band, start, end, district,
+        baseline_start, baseline_end, use_anomaly
+    ):
         # A stable pseudo-reading derived from the names; never None here so
         # every district is complete.
-        return float((len(gee_id) + len(district)) % 17)
+        base_value = float((len(gee_id) + len(district)) % 17)
+        
+        if use_anomaly:
+            # For anomaly-based variables (NDVI, LST), return a small anomaly
+            # to ensure variation across districts for proper scaling
+            anomaly = (float(len(district)) % 5) - 2.0  # Range: -2.0 to +2.0
+            return (base_value, anomaly)
+        else:
+            # For non-anomaly variables (SPI, SM), return same value for both
+            return (base_value, base_value)
 
 
 def test_full_chain_produces_master_and_alerts(tmp_path, monkeypatch):

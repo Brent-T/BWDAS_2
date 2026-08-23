@@ -1,0 +1,11 @@
+pydantic>=2.5
+python-dotenv>=1.0
+
+[dev]
+pytest>=7.4
+
+[gee]
+earthengine-api>=0.1.380
+
+[geo]
+geopandas>=0.14

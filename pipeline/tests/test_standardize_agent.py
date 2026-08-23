@@ -33,7 +33,14 @@ def test_normalise_inverts_for_low_means_stress():
 
 
 def test_normalise_flat_field_is_neutral():
-    assert _normalise([5.0, 5.0, 5.0], invert=False) == [50.0, 50.0, 50.0]
+    # For non-inverted variables (LST), flat field returns 0.0 (no stress variation)
+    # This is the updated behavior: flat = no variation = 0.0 for non-inverted
+    assert _normalise([5.0, 5.0, 5.0], invert=False) == [0.0, 0.0, 0.0]
+
+
+def test_normalise_flat_field_inverted_is_stressed():
+    # For inverted variables (SPI, NDVI, SM), flat field at ~0 means max stress (100.0)
+    assert _normalise([0.0, 0.0, 0.0], invert=True) == [100.0, 100.0, 100.0]
 
 
 def test_weights_are_the_world_bank_40_20_20_20():
@@ -43,8 +50,10 @@ def test_weights_are_the_world_bank_40_20_20_20():
 
 
 def test_uniform_stress_yields_cdi_50():
-    # If every district is identical on every variable, every normalised
-    # score is 50, so CDI must be exactly 50 regardless of the weights.
+    # If every district is identical on every variable:
+    # - Inverted vars (SPI, NDVI, SM) get 100.0 (flat field = max stress for low-value indicators)
+    # - Non-inverted var (LST) gets 0.0 (flat field = no stress variation)
+    # CDI = 0.40*100 + 0.20*100 + 0.20*0 + 0.20*100 = 80.0
     districts = ["Kweneng", "Central", "Ghanzi"]
     readings = [
         _reading(d, v, 1.0)
@@ -55,8 +64,10 @@ def test_uniform_stress_yields_cdi_50():
     assert result.ok
     records = result.artifact
     assert len(records) == 3
-    assert all(r.cdi == 50.0 for r in records)
-    assert all(r.stress_level == "Moderate" for r in records)
+    # All districts have identical values, so all get the same CDI
+    expected_cdi = round(0.40 * 100.0 + 0.20 * 100.0 + 0.20 * 0.0 + 0.20 * 100.0, 1)
+    assert all(r.cdi == expected_cdi for r in records)
+    assert all(r.stress_level == config.stress_level(expected_cdi) for r in records)
 
 
 def test_district_missing_a_variable_is_dropped_not_imputed():
