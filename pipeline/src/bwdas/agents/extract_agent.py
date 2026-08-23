@@ -44,31 +44,53 @@ class EarthEngineGateway:
         if self._ee is None:
             import ee  # heavy / requires auth -> keep out of import path
 
-            ee.Initialize()
+            ee.Initialize(project=config.GEE_PROJECT)
             self._ee = ee
         return self._ee
 
     def district_mean(self, gee_id, band, start, end, district):
         ee = self._ensure()
-        botswana = (
-            ee.FeatureCollection("USDOS/LSIB_SIMPLE/2017")
-            .filter(ee.Filter.eq("country_na", "Botswana"))
+        districts = (
+            ee.FeatureCollection("FAO/GAUL/2015/level1")
+            .filter(ee.Filter.eq("ADM0_NAME", "Botswana"))
         )
-        region = botswana.filter(
-            ee.Filter.regex("system:index", district.replace("-", " "))
+        region = districts.filter(
+            ee.Filter.eq(
+                "ADM1_NAME",
+                config.GEE_DISTRICT_NAMES.get(district, district),
+            )
         ).geometry()
-        image = (
+
+        collection = (
             ee.ImageCollection(gee_id)
             .filterDate(start, end)
             .filterBounds(region)
-            .select(band)
-            .mean()
         )
+        if gee_id == config.DATASETS["ndvi"]["gee_id"]:
+            collection = collection.filter(
+                ee.Filter.lt("CLOUDY_PIXEL_PERCENTAGE", config.S2_CLOUD_THRESHOLD)
+            )
+            image = collection.map(
+                lambda img: img.normalizedDifference(["B8", "B4"])
+                .rename("NDVI")
+            ).median()
+            result_band = "NDVI"
+        elif gee_id == config.DATASETS["lst"]["gee_id"]:
+            image = collection.select("LST_Day_1km").map(
+                lambda img: img.multiply(config.LST_SCALE_FACTOR)
+                .subtract(config.KELVIN_TO_CELSIUS)
+                .rename("LST_celsius")
+            ).mean()
+            result_band = "LST_celsius"
+        else:
+            image = collection.select(band).mean()
+            result_band = band
+
         reduced = image.reduceRegion(
             reducer=ee.Reducer.mean(), geometry=region, scale=5000,
             maxPixels=1e13, bestEffort=True,
         ).getInfo()
-        value = reduced.get(band) if reduced else None
+        value = reduced.get(result_band) if reduced else None
         return float(value) if value is not None else None
 
 
@@ -118,6 +140,7 @@ class ExtractAgent(BaseAgent):
         artifact.write_text(
             json.dumps([r.model_dump() for r in readings], indent=2)
         )
+        ctx.artifacts["raw_readings"] = readings
 
         return StageResult(
             stage=self.name,

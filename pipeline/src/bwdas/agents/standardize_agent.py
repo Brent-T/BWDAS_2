@@ -27,8 +27,14 @@ INVERTED = {"spi", "ndvi", "sm"}
 def _normalise(values: list[float], invert: bool) -> list[float]:
     """Min-max scale to 0-100; optionally invert the direction of stress."""
     lo, hi = min(values), max(values)
-    if hi == lo:
-        return [50.0] * len(values)  # flat field -> neutral stress
+    
+    # Use a small epsilon threshold to catch near-identical values and micro-traces
+    EPSILON = 1e-4
+    if (hi - lo) < EPSILON:
+        # If inverted (SPI, NDVI, SM), lower value means higher stress.
+        # For a dead-dry winter field where all values are ~0, stress should be 100.0, not 50.0.
+        return [100.0] * len(values) if invert else [0.0] * len(values)
+        
     scores = [(v - lo) / (hi - lo) * 100.0 for v in values]
     return [100.0 - s for s in scores] if invert else scores
 

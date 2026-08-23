@@ -27,6 +27,12 @@ RAW_DIR = DATA_DIR / "raw"
 STANDARD_DIR = DATA_DIR / "standardized"
 OUTPUT_DIR = DATA_DIR / "output"
 
+# Google Cloud project used for Earth Engine requests.
+GEE_PROJECT = os.getenv("BWDAS_GEE_PROJECT", "bwdas-gee")
+S2_CLOUD_THRESHOLD = float(os.getenv("BWDAS_S2_CLOUD_THRESHOLD", "20"))
+LST_SCALE_FACTOR = 0.02
+KELVIN_TO_CELSIUS = 273.15
+
 # Canonical district table the PoC must cover (GADM Level 1, NAME_1).
 DISTRICTS: tuple[str, ...] = (
     "Central",
@@ -39,6 +45,12 @@ DISTRICTS: tuple[str, ...] = (
     "South-East",
     "Southern",
 )
+
+# Canonical BWDAS labels mapped to the names published by GAUL.
+GEE_DISTRICT_NAMES = {
+    "North-East": "North East",
+    "North-West": "Ngamiland",
+}
 
 # --------------------------------------------------------------------------- #
 # Source datasets (all free, all served by Google Earth Engine)
@@ -70,8 +82,8 @@ DATASETS = {
     },
     # Root-zone soil moisture — crop establishment capacity.
     "sm": {
-        "gee_id": "NASA/SMAP/SPL3SMP_E/005",
-        "band": "soil_moisture_am",
+        "gee_id": "NASA/SMAP/SPL4SMGP/008",
+        "band": "sm_rootzone",
         "baseline": ("2015-01-01", "2024-12-31"),
         "weight": 0.20,
         "unit": "cm3/cm3",
@@ -113,9 +125,9 @@ ALERT_THRESHOLDS = (
 def stress_level(cdi: float) -> str:
     """Map a 0-100 CDI score onto its classification band."""
     for low, high, label in STRESS_BANDS:
-        if low <= cdi < high:
+        if low <= cdi <= high:
             return label
-    return "Severe"  # cdi >= 100
+    return "Severe"  # cdi outside the configured range
 
 
 def alert_level(cdi: float) -> str | None:

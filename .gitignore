@@ -3,3 +3,6 @@ node_modules/
 dist/
 build/
 *.log
+pipeline/.venv/
+pipeline/src/*.egg-info/
+**/__pycache__/

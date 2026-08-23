@@ -73,7 +73,7 @@ class BaseAgent(ABC):
             self._check_inputs(ctx)
             result = self.run(ctx)
             result.duration_s = round(time.perf_counter() - start, 3)
-            if self.produces and result.artifact:
+            if self.produces and result.artifact and self.produces not in ctx.artifacts:
                 ctx.artifacts[self.produces] = result.artifact
             ctx.say(f"{self.name}: {'ok' if result.ok else 'FAILED'} "
                     f"({result.records} records, {result.duration_s}s)")
