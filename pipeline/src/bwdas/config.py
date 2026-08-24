@@ -34,6 +34,8 @@ LST_SCALE_FACTOR = 0.02
 KELVIN_TO_CELSIUS = 273.15
 
 # Canonical district table the PoC must cover (GADM Level 1, NAME_1).
+#Chobe excluded from PoC scope — minimal agricultural area, 
+# primarily national park. Roadmap item for v2 wildlife corridor module.
 DISTRICTS: tuple[str, ...] = (
     "Central",
     "Ghanzi",

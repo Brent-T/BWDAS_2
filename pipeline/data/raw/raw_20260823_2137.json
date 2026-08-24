@@ -1,0 +1,290 @@
+[
+  {
+    "district": "Central",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 8.220197329245215e-05,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Ghanzi",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Kgalagadi",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Kgatleng",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Kweneng",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "North-East",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "North-West",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "South-East",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Southern",
+    "variable": "spi",
+    "date": "2026-08-15",
+    "value": 0.0,
+    "source": "UCSB-CHG/CHIRPS/DAILY",
+    "unit": "mm"
+  },
+  {
+    "district": "Central",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.09100879659432645,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Ghanzi",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.061066436858000145,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Kgalagadi",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.042791273271626934,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Kgatleng",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.08446322418756963,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Kweneng",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.05899403586612692,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "North-East",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.11258635079942725,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "North-West",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.11172816800940882,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "South-East",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.08473743783309304,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Southern",
+    "variable": "ndvi",
+    "date": "2026-08-15",
+    "value": 0.04158805428365003,
+    "source": "COPERNICUS/S2_SR_HARMONIZED",
+    "unit": "index"
+  },
+  {
+    "district": "Central",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -12.805766247470885,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Ghanzi",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -12.421357789830601,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Kgalagadi",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -11.427919880520209,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Kgatleng",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -13.464916025602072,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Kweneng",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -12.320612940844468,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "North-East",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -12.83514981509801,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "North-West",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -13.13713676699659,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "South-East",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -12.229082017400295,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Southern",
+    "variable": "lst",
+    "date": "2026-08-15",
+    "value": -11.577614725541,
+    "source": "MODIS/061/MOD11A1",
+    "unit": "celsius"
+  },
+  {
+    "district": "Central",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.09362647641571008,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "Ghanzi",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.03717555996449243,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "Kgalagadi",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.043699467296892405,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "Kgatleng",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.07298768796535535,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "Kweneng",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.03985666624803204,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "North-East",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.18079767831210325,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "North-West",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.03943151758085858,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "South-East",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.11285192298410684,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  },
+  {
+    "district": "Southern",
+    "variable": "sm",
+    "date": "2026-08-15",
+    "value": 0.04589735976040593,
+    "source": "NASA/SMAP/SPL4SMGP/008",
+    "unit": "cm3/cm3"
+  }
+]
