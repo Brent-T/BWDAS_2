@@ -39,9 +39,12 @@ class VariableScore(BaseModel):
     """A single variable's anomaly plus its 0-100 normalised stress score."""
 
     raw: float  # observed value
-    anomaly: float  # deviation from the climatological baseline
+    anomaly: float  # deviation from the climatological baseline (Z-score for Model C)
     anomaly_pct: Optional[float] = None  # percent form where meaningful
-    score: float = Field(ge=0, le=100)  # 0 = no stress, 100 = max stress
+    score: float = Field(ge=0, le=100)  # 0 = no stress, 100 = max stress (Model A spatial)
+    z_score: Optional[float] = None  # Model C: standardized anomaly (unitless)
+    baseline_mean: Optional[float] = None  # Model C: historical mean for this period
+    baseline_std: Optional[float] = None  # Model C: historical std dev for this period
 
 
 class CDIRecord(BaseModel):
@@ -49,6 +52,9 @@ class CDIRecord(BaseModel):
 
     Produced by the Standardize agent, persisted by the Load agent and
     evaluated by the Feed agent. This is the atomic unit of the pipeline.
+    
+    Contains BOTH Model A (spatial min-max) and Model C (climatological Z-score)
+    metrics for dual-purpose reporting: regional ranking AND scientific early-warning.
     """
 
     district: str
@@ -58,8 +64,11 @@ class CDIRecord(BaseModel):
     ndvi: VariableScore
     lst: VariableScore
     sm: VariableScore
-    cdi: float = Field(ge=0, le=100)
-    stress_level: str
+    cdi: float = Field(ge=0, le=100)  # Model A: spatial min-max CDI (0-100)
+    cdi_z: Optional[float] = None  # Model C: climatological Z-score CDI (typically -4 to +4)
+    cdi_z_stress_pct: Optional[float] = None  # Model C: mapped to 0-100% stress scale
+    stress_level: str  # Model A classification
+    stress_level_z: Optional[str] = None  # Model C classification based on Z-CDI
 
     @field_validator("district")
     @classmethod
